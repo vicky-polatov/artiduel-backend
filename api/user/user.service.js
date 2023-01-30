@@ -102,7 +102,8 @@ async function add(user) {
             score: 100
         }
         const collection = await dbService.getCollection('user')
-        await collection.insertOne(userToAdd)
+        const userFromDB = await collection.insertOne(userToAdd)
+        logger.info('userFromDB', userFromDB)
         return userToAdd
     } catch (err) {
         logger.error('cannot add user', err)
