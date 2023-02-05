@@ -25,7 +25,7 @@ const authRoutes = require('./api/auth/auth.routes')
 const userRoutes = require('./api/user/user.routes')
 const reviewRoutes = require('./api/review/review.routes')
 const drawRoutes = require('./api/draw/draw.routes')
-const {setupSocketAPI} = require('./services/socket.service')
+const { setupSocketAPI } = require('./services/socket.service')
 
 // routes
 const setupAsyncLocalStorage = require('./middlewares/setupAls.middleware')
@@ -38,7 +38,7 @@ app.use('/api/draw', drawRoutes)
 setupSocketAPI(http)
 
 // Make every server-side-route to match the index.html
-// so when requesting http://localhost:3030/index.html/draw/123 it will still respond with
+// so when requesting http://localhost:3030/index.html/game/123 it will still respond with
 // our SPA (single page app) (the index.html file) and allow vue/react-router to take it from there
 app.get('/**', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'))

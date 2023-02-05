@@ -1,4 +1,5 @@
 const logger = require('./logger.service')
+const { makeId } = require('./util.service')
 
 var gIo = null
 
@@ -13,14 +14,47 @@ function setupSocketAPI(http) {
         socket.on('disconnect', socket => {
             logger.info(`Socket disconnected [id: ${socket.id}]`)
         })
-        socket.on('room-level-entrance', (roomInfo) => {
-            const { level, roomId } = JSON.parse(roomInfo)
-            if(socket.roomId === roomId) return
-            if(socket.roomId) socket.leave(socket.roomId)
+        socket.on('room-level-entrance', async (level) => {
             socket.level = level
-            socket.join(roomId)
-            socket.roomId = roomId
-            console.log(` @@@ Socket with id: ${socket.id}, userId: ${socket.userId} has entered level: ${level}, roomId: ${roomId} @@@`)
+            const sockets = await _getAllSockets()
+            const formattedSockets = sockets.map(socket => {
+                return { id: socket.id, level: socket.level, roomId: socket.roomId || null, userId: socket.userId || null }
+            })
+            const opponent = formattedSockets.find(onlineUser => {
+                return (onlineUser.level === level && (!onlineUser.roomId) && onlineUser.id !== socket.id)
+            })
+
+            // Match! go play
+            if (opponent) {
+                const opponentSocket = await _getUserSocket(opponent.userId)
+                const roomId = makeId()
+                socket.roomId = roomId
+                opponentSocket.roomId = roomId
+                socket.join(roomId)
+                opponentSocket.join(roomId)
+                socket.emit('matched-opponent', roomId)
+                opponentSocket.emit('matched-opponent', roomId)
+            }
+            _printSockets()
+        })
+        socket.on('left-room', async () => {
+            // change to broadcast - doesn't work yet (45)
+            const sockets = await _getAllSockets()
+            const opponent = sockets.find(onlineUser => {
+                return (onlineUser.roomId === socket.roomId && onlineUser.id !== socket.id)
+            })
+            if (opponent) {
+                gIo.to(socket.roomId).emit('opponent-left', socket.userId)
+                opponent.level = null
+                opponent.roomId = null
+                opponent.leave(socket.roomId)
+            }
+            if (socket.roomId) socket.leave(socket.roomId)
+            socket.level = null
+            socket.roomId = null
+            _printSockets()
+            // socket.leave(socket.roomId)
+            // delete socket.roomId
         })
         socket.on('chat-set-topic', topic => {
             if (socket.myTopic === topic) return
@@ -111,7 +145,7 @@ async function _printSockets() {
     sockets.forEach(_printSocket)
 }
 function _printSocket(socket) {
-    console.log(`Socket - socketId: ${socket.id} userId: ${socket.userId}`)
+    console.log(`Socket - socketId: ${socket.id} userId: ${socket.userId}, roomId: ${socket.roomId}, level: ${socket.level}`)
 }
 
 module.exports = {
