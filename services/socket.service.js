@@ -1,3 +1,4 @@
+const userService = require('../api/user/user.service')
 const logger = require('./logger.service')
 const { makeId } = require('./util.service')
 
@@ -15,6 +16,7 @@ function setupSocketAPI(http) {
             logger.info(`Socket disconnected [id: ${socket.id}]`)
         })
         socket.on('room-level-entrance', async (level) => {
+            // TODO - make sure after refresh the user is back in to the socket room (both of them)
             socket.level = level
             const sockets = await _getAllSockets()
             const formattedSockets = sockets.map(socket => {
@@ -24,7 +26,7 @@ function setupSocketAPI(http) {
                 return (onlineUser.level === level && (!onlineUser.roomId) && onlineUser.id !== socket.id)
             })
 
-            // Match! go play
+            // Match! go play. the opponent is actually the first one to create the room.
             if (opponent) {
                 const opponentSocket = await _getUserSocket(opponent.userId)
                 const roomId = makeId()
@@ -32,13 +34,15 @@ function setupSocketAPI(http) {
                 opponentSocket.roomId = roomId
                 socket.join(roomId)
                 opponentSocket.join(roomId)
-                socket.emit('matched-opponent', roomId)
-                opponentSocket.emit('matched-opponent', roomId)
+                // Add fullname to each socket when login to avoid DB requist
+                const user = await userService.getById(socket.userId)
+                const opponentUser = await userService.getById(opponentSocket.userId)
+                socket.emit('matched-opponent', { roomId: roomId, isHost: false, opponentPlayer: { id: opponentUser._id, fullname: opponentUser.fullname } })
+                opponentSocket.emit('matched-opponent', { roomId: roomId, isHost: true, opponentPlayer: { id: user._id, fullname: user.fullname } })
             }
-            _printSockets()
+            // _printSockets()
         })
         socket.on('left-room', async () => {
-            // change to broadcast - doesn't work yet (45)
             const sockets = await _getAllSockets()
             const opponent = sockets.find(onlineUser => {
                 return (onlineUser.roomId === socket.roomId && onlineUser.id !== socket.id)
@@ -56,21 +60,19 @@ function setupSocketAPI(http) {
             // socket.leave(socket.roomId)
             // delete socket.roomId
         })
-        socket.on('chat-set-topic', topic => {
-            if (socket.myTopic === topic) return
-            if (socket.myTopic) {
-                socket.leave(socket.myTopic)
-                logger.info(`Socket is leaving topic ${socket.myTopic} [id: ${socket.id}]`)
-            }
-            socket.join(topic)
-            socket.myTopic = topic
+        socket.on('rejoin-room', async roomId => {
+            if (socket.roomId) return
+            // const sockets = await _getAllSockets()
+            // const opponent = sockets.find(s => s.roomId === roomId)
+            // if (opponent) opponent.join(roomId)
+            socket.roomId = roomId
+            socket.join(roomId)
         })
-        socket.on('chat-send-msg', msg => {
-            logger.info(`New chat msg from socket [id: ${socket.id}], emitting to topic ${socket.myTopic}`)
+        socket.on('canvas-changed', dataURL => {
             // emits to all sockets:
             // gIo.emit('chat addMsg', msg)
             // emits only to sockets in the same room
-            gIo.to(socket.myTopic).emit('chat-add-msg', msg)
+            socket.broadcast.to(socket.roomId).emit('opponent-canvas-change', dataURL);
         })
         socket.on('user-watch', userId => {
             logger.info(`user-watch from socket [id: ${socket.id}], on user ${userId}`)
@@ -126,6 +128,10 @@ async function broadcast({ type, data, room = null, userId }) {
         logger.info(`Emit to all`)
         gIo.emit(type, data)
     }
+}
+
+async function _reJoinUser(socket) {
+
 }
 
 async function _getUserSocket(userId) {
