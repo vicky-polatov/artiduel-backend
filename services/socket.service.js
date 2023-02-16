@@ -1,5 +1,6 @@
 const userService = require('../api/user/user.service')
 const logger = require('./logger.service')
+const { getWord } = require('./game.service')
 const { makeId } = require('./util.service')
 
 var gIo = null
@@ -28,6 +29,7 @@ function setupSocketAPI(http) {
 
             // Match! go play. the opponent is actually the first one to create the room.
             if (opponent) {
+                const word = getWord(socket.level)
                 const opponentSocket = await _getUserSocket(opponent.userId)
                 const roomId = makeId()
                 socket.roomId = roomId
@@ -36,8 +38,8 @@ function setupSocketAPI(http) {
                 const opponentUser = await userService.getById(opponentSocket.userId)
                 socket.join(roomId)
                 opponentSocket.join(roomId)
-                socket.emit('matched-opponent', { roomId: roomId, isHost: false, level: socket.level, opponentPlayer: { _id: opponentUser._id, fullname: opponentUser.fullname } })
-                opponentSocket.emit('matched-opponent', { roomId: roomId, isHost: true, level: socket.level, opponentPlayer: { _id: user._id, fullname: user.fullname } })
+                socket.emit('matched-opponent', { roomId, isHost: false, level: socket.level, word, opponentPlayer: { _id: opponentUser._id, fullname: opponentUser.fullname } })
+                opponentSocket.emit('matched-opponent', { roomId, isHost: true, level: socket.level, word, opponentPlayer: { _id: user._id, fullname: user.fullname } })
             }
             // _printSockets()
         })
