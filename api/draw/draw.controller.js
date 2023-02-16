@@ -27,11 +27,11 @@ async function getDrawById(req, res) {
 }
 
 async function addDraw(req, res) {
-  const {loggedinUser} = req
-
+  // const { loggedinUser } = req
   try {
     const draw = req.body
-    draw.owner = loggedinUser
+    draw.player1.likes = []
+    draw.player2.likes = []
     const addedDraw = await drawService.add(draw)
     res.json(addedDraw)
   } catch (err) {

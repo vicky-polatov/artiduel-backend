@@ -32,13 +32,12 @@ function setupSocketAPI(http) {
                 const roomId = makeId()
                 socket.roomId = roomId
                 opponentSocket.roomId = roomId
-                socket.join(roomId)
-                opponentSocket.join(roomId)
-                // Add fullname to each socket when login to avoid DB requist
                 const user = await userService.getById(socket.userId)
                 const opponentUser = await userService.getById(opponentSocket.userId)
-                socket.emit('matched-opponent', { roomId: roomId, isHost: false, opponentPlayer: { id: opponentUser._id, fullname: opponentUser.fullname } })
-                opponentSocket.emit('matched-opponent', { roomId: roomId, isHost: true, opponentPlayer: { id: user._id, fullname: user.fullname } })
+                socket.join(roomId)
+                opponentSocket.join(roomId)
+                socket.emit('matched-opponent', { roomId: roomId, isHost: false, level: socket.level, opponentPlayer: { _id: opponentUser._id, fullname: opponentUser.fullname } })
+                opponentSocket.emit('matched-opponent', { roomId: roomId, isHost: true, level: socket.level, opponentPlayer: { _id: user._id, fullname: user.fullname } })
             }
             // _printSockets()
         })
@@ -79,7 +78,7 @@ function setupSocketAPI(http) {
             socket.join('watching:' + userId)
 
         })
-        socket.on('set-user-socket', userId => {
+        socket.on('set-user-socket', (userId) => {
             logger.info(`Setting socket.userId = ${userId} for socket [id: ${socket.id}]`)
             socket.userId = userId
         })

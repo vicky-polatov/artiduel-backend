@@ -52,15 +52,11 @@ async function add(draw) {
 
 async function update(draw) {
     try {
-        const drawToSave = {
-            vendor: draw.vendor,
-            price: draw.price
-        }
         const collection = await dbService.getCollection('draw')
         await collection.updateOne({ _id: ObjectId(draw._id) }, { $set: drawToSave })
         return draw
     } catch (err) {
-        logger.error(`cannot update draw ${drawId}`, err)
+        logger.error(`cannot update draw ${draw._id}`, err)
         throw err
     }
 }
