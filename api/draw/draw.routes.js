@@ -10,7 +10,7 @@ const router = express.Router()
 router.get('/', log, getDraws)
 router.get('/:id', getDrawById)
 router.post('/', requireAuth, addDraw)
-router.put('/:id', requireAuth, updateDraw)
+router.put('/:id', updateDraw)
 router.delete('/:id', requireAuth, removeDraw)
 // router.delete('/:id', requireAuth, requireAdmin, removeDraw)
 

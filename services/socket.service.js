@@ -38,8 +38,8 @@ function setupSocketAPI(http) {
                 const opponentUser = await userService.getById(opponentSocket.userId)
                 socket.join(roomId)
                 opponentSocket.join(roomId)
-                socket.emit('matched-opponent', { roomId, isHost: false, level: socket.level, word, opponentPlayer: { _id: opponentUser._id, fullname: opponentUser.fullname } })
-                opponentSocket.emit('matched-opponent', { roomId, isHost: true, level: socket.level, word, opponentPlayer: { _id: user._id, fullname: user.fullname } })
+                socket.emit('matched-opponent', { roomId, isHost: false, level: socket.level, word, opponentPlayer: { _id: opponentUser._id, fullname: opponentUser.fullname, imgUrl: opponentUser.imgUrl } })
+                opponentSocket.emit('matched-opponent', { roomId, isHost: true, level: socket.level, word, opponentPlayer: { _id: user._id, fullname: user.fullname, imgUrl: user.imgUrl  } })
             }
             // _printSockets()
         })

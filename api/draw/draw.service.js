@@ -3,7 +3,7 @@ const logger = require('../../services/logger.service')
 const utilService = require('../../services/util.service')
 const ObjectId = require('mongodb').ObjectId
 
-async function query(filterBy={title:''}) {
+async function query(filterBy = { title: '' }) {
     try {
         const criteria = {
             title: { $regex: filterBy.title, $options: 'i' }
@@ -52,6 +52,14 @@ async function add(draw) {
 
 async function update(draw) {
     try {
+        const drawToSave = {
+            _id: ObjectId(draw._id), // needed for the returnd obj
+            createdAt: draw.createdAt,
+            player1: draw.player1,
+            player2: draw.player2,
+            title: draw.title
+        }
+
         const collection = await dbService.getCollection('draw')
         await collection.updateOne({ _id: ObjectId(draw._id) }, { $set: drawToSave })
         return draw
