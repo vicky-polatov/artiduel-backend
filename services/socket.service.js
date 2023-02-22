@@ -12,9 +12,10 @@ function setupSocketAPI(http) {
         }
     })
     gIo.on('connection', socket => {
-        logger.info(`New connected socket [id: ${socket.id}]`)
-        socket.on('disconnect', socket => {
-            logger.info(`Socket disconnected [id: ${socket.id}]`)
+        console.log(`New connected socket [id: ${socket.id}]`)
+        socket.on('disconnect', () => {
+            console.log(`Socket disconnected [id: ${socket.id}]`)
+            if (socket.roomId) onUserQuit(socket.id, socket.roomId)
         })
         socket.on('room-level-entrance', async (level) => {
             // TODO - make sure after refresh the user is back in to the socket room (both of them)
@@ -39,17 +40,19 @@ function setupSocketAPI(http) {
                 socket.join(roomId)
                 opponentSocket.join(roomId)
                 socket.emit('matched-opponent', { roomId, isHost: false, level: socket.level, word, opponentPlayer: { _id: opponentUser._id, fullname: opponentUser.fullname, imgUrl: opponentUser.imgUrl } })
-                opponentSocket.emit('matched-opponent', { roomId, isHost: true, level: socket.level, word, opponentPlayer: { _id: user._id, fullname: user.fullname, imgUrl: user.imgUrl  } })
+                opponentSocket.emit('matched-opponent', { roomId, isHost: true, level: socket.level, word, opponentPlayer: { _id: user._id, fullname: user.fullname, imgUrl: user.imgUrl } })
             }
             // _printSockets()
         })
         socket.on('left-room', async () => {
+            console.log('socket - left-room', socket);
+
             const sockets = await _getAllSockets()
             const opponent = sockets.find(onlineUser => {
                 return (onlineUser.roomId === socket.roomId && onlineUser.id !== socket.id)
             })
             if (opponent) {
-                gIo.to(socket.roomId).emit('opponent-left', socket.userId)
+                gIo.to(socket.roomId).emit('opponent-quit', socket.userId)
                 opponent.level = null
                 opponent.roomId = null
                 opponent.leave(socket.roomId)
@@ -60,6 +63,8 @@ function setupSocketAPI(http) {
             _printSockets()
             // socket.leave(socket.roomId)
             // delete socket.roomId
+        })
+        socket.on('clear-room-listening', async (isGameOn) => {
         })
         socket.on('rejoin-room', async roomId => {
             if (socket.roomId) return
@@ -89,6 +94,21 @@ function setupSocketAPI(http) {
             delete socket.userId
         })
     })
+}
+
+const onUserQuit = async (socketId, socketRoomdId) => {
+    const sockets = await _getAllSockets()
+    const opponentSocket = sockets.find(onlineUser => {
+        return (onlineUser.roomId === socketRoomdId && onlineUser.id !== socketId)
+    })
+    
+    if (opponentSocket) {
+        console.log('letting opponent socket know you left...')
+        opponentSocket.emit('opponent-disconnect')
+        opponentSocket.leave(opponentSocket.roomId)
+        opponentSocket.level = null
+        opponentSocket.roomId = null
+    }
 }
 
 function emitTo({ type, data, label }) {
