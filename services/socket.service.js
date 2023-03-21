@@ -45,8 +45,6 @@ function setupSocketAPI(http) {
             // _printSockets()
         })
         socket.on('left-room', async () => {
-            console.log('socket - left-room', socket);
-
             const sockets = await _getAllSockets()
             const opponent = sockets.find(onlineUser => {
                 return (onlineUser.roomId === socket.roomId && onlineUser.id !== socket.id)

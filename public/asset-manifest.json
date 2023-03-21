@@ -1,0 +1,16 @@
+{
+  "files": {
+    "main.css": "/static/css/main.5aff2cf7.css",
+    "main.js": "/static/js/main.5fe602c1.js",
+    "static/media/avatar2.jpg": "/static/media/avatar2.47a57e4821e2ddb7d01a.jpg",
+    "static/media/apercu_regular_pro.otf": "/static/media/apercu_regular_pro.36c9dd0f0eebc290890b.otf",
+    "static/media/HelveticaNeue.ttf": "/static/media/HelveticaNeue.50a6cd509ab1a89a5956.ttf",
+    "index.html": "/index.html",
+    "main.5aff2cf7.css.map": "/static/css/main.5aff2cf7.css.map",
+    "main.5fe602c1.js.map": "/static/js/main.5fe602c1.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.5aff2cf7.css",
+    "static/js/main.5fe602c1.js"
+  ]
+}
