@@ -3,10 +3,14 @@ const logger = require('../../services/logger.service')
 const utilService = require('../../services/util.service')
 const ObjectId = require('mongodb').ObjectId
 
-async function query(filterBy = { title: '' }) {
+async function query(filterBy = { txt: '' }) {
     try {
-        const criteria = {
-            title: { $regex: filterBy.title, $options: 'i' }
+        let criteria = {}
+        if (filterBy.txt) {
+            const txtCriteria = { $regex: filterBy.txt, $options: 'i' }
+            criteria = {
+                $or: [{ 'player1.fullname': txtCriteria }, { 'player2.fullname': txtCriteria }, { title: txtCriteria }]
+            }
         }
         const collection = await dbService.getCollection('draw')
         var draws = await collection.find(criteria).toArray()
@@ -68,7 +72,6 @@ async function update(draw) {
         throw err
     }
 }
-
 
 module.exports = {
     remove,

@@ -5,7 +5,7 @@ async function getDraws(req, res) {
   try {
     logger.debug('Getting Draws')
     const filterBy = {
-      title: req.query.title || ''
+      txt: req.query.txt || ''
     }
     const draws = await drawService.query(filterBy)
     res.json(draws)
